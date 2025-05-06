@@ -4,11 +4,9 @@ from tkinter import *
 import random
 from PIL import Image, ImageTk,ImageOps
 from tkinter import filedialog
+import matplotlib.pyplot as plt
+import numpy as np
 
-PIXEL_SIZE = 2
-WIDTH, HEIGHT = 512, 512
-GRID_SIZE = 8
-SQUARE_SIZE = WIDTH // GRID_SIZE
 
 class Cube:
     def __init__(self, img, ans_coord, now_coord, canvas):
@@ -26,21 +24,33 @@ class Cube:
 
 class PuzzleApp:
     def __init__(self, root, menu_frame, difficulty, mode):
-        #self.root = Tk()
-        self.root = root
-        self.root.title("分割並打亂正方形")
-        screenWidth = self.root.winfo_screenwidth() # 螢幕寬度
-        screenHeight =self.root.winfo_screenheight() # 螢幕高度
+        
+        self.menu_frame = menu_frame
+        self.puzzle_frame = Frame(root)
+        self.puzzle_frame.pack()
+        root.title("分割並打亂正方形")
+        screenWidth = root.winfo_screenwidth() # 螢幕寬度
+        screenHeight =root.winfo_screenheight() # 螢幕高度
         w = 600 # 視窗寬
         h = 600 # 視窗高
         x=(screenWidth-w) / 2 # 視窗左上角x軸位置
         y=(screenHeight-h) / 2 # 視窗左上角Y軸
-        self.root.geometry("%dx%d+%d+%d"%(w,h,x,y))
+        root.geometry("%dx%d+%d+%d"%(w,h,x,y))
 
+        #畫面建構需要的變數
+        self.difficulty=difficulty
+        self.width=512
+        self.height = 512
+        self.grid_size = 8
+        self.square_size= self.width// self.grid_size
+        self.key_point=4
+        
+         #設定難度
+        self.handle_variable()
         self.first_frame_init()
         self.second_frame_init()
         self.third_frame_init()
-
+        
         #第一個Frame的變數
         self.running=False
         self.after_id=None
@@ -55,7 +65,7 @@ class PuzzleApp:
         self.fix_coords = []
         #第三個frame的變數
         self.unmatch_dict={}
-        
+       
         #生成漸層圖片
         self.gradient_image = self.generate_fixed_axis_gradient()
         #在canva上劃出方塊
@@ -92,29 +102,47 @@ class PuzzleApp:
         
     def first_frame_init(self):    
         #第一個frame
-        self.counter_frame =Frame(self.root)
+        self.counter_frame =Frame(self.puzzle_frame)
         self.counter_frame.pack()
+        self.back_btn=Button(self.counter_frame,text="back previous page",command=self.back_menu)
+        self.back_btn.pack(side=LEFT,padx=10)
         self.load_img=Button(self.counter_frame,text="load user picture",command=self.load_puzzle)
         self.load_img.pack(side=LEFT)
-        self.timer=Label(self.counter_frame,text=f"時間 : {0:02}:{0:02}:{0:02}",font=("Helvetica", 24))
+        self.timer=Label(self.counter_frame,text=f"時間 : {0:02}:{0:02}:{0:02}",font=("Helvetica", 20))
         self.timer.pack(side=LEFT,padx=10)
-        self.step_count=Label(self.counter_frame,text=f"步數:{0}",font=("Helvetica", 24))
+        self.step_count=Label(self.counter_frame,text=f"步數:{0}",font=("Helvetica", 20))
         self.step_count.pack(side=LEFT)
         
     def second_frame_init(self):
         # 第二個Frame + Canvas
-        self.canva_frame = Frame(self.root)
+        self.canva_frame = Frame(self.puzzle_frame)
         self.canva_frame.pack()
-        self.canvas = tk.Canvas(self.canva_frame, width=WIDTH, height=HEIGHT)
+        self.canvas = tk.Canvas(self.canva_frame, width=self.width, height=self.height)
         self.canvas.pack()
         
     def third_frame_init(self):
         #第三個frame
-        self.button_frame=Frame(self.root)
+        self.button_frame=Frame(self.puzzle_frame)
         self.button_frame.pack()
         self.unmatch_btn=Button(self.button_frame,text="find unmatch block",command=self.find_unmatch)
-        self.unmatch_btn.pack()
+        self.unmatch_btn.pack(side=LEFT,padx=20)
+        self.show_img=Button(self.button_frame,text="show picture",command=self.show_whole_picture)
+        self.show_img.pack(side=LEFT)
     
+    def handle_variable(self):
+        if self.difficulty=="簡單":
+            self.grid_size= 6
+            self.square_size= self.width// self.grid_size
+        elif self.difficulty=="中等":
+            self.grid_size= 8
+            self.square_size= self.width// self.grid_size
+        elif self.difficulty=="困難":
+            self.grid_size= 9
+            self.square_size= self.width// self.grid_size
+    
+    def back_menu(self):
+        self.puzzle_frame.destroy()
+        self.menu_frame.pack()
     def load_puzzle(self):
         if self.running:
             self.canvas.after_cancel(self.after_id)
@@ -177,44 +205,44 @@ class PuzzleApp:
             fixed_value+=50
         print(f"固定軸：{fixed_axis}, 固定值：{fixed_value}")
 
-        img = Image.new("RGB", (WIDTH, HEIGHT))
+        img = Image.new("RGB", (self.width, self.height))
         pixels = img.load()
 
-        for y in range(HEIGHT):
-            for x in range(WIDTH):
+        for y in range(self.height):
+            for x in range(self.width):
                 if fixed_axis == 'R':
-                    color = (fixed_value, int(y * 255 / HEIGHT), int(x * 255 / WIDTH))
+                    color = (fixed_value, int(y * 255 / self.height), int(x * 255 / self.width))
                 elif fixed_axis == 'G':
-                    color = (int(x * 255 / WIDTH), fixed_value, int(y * 255 / HEIGHT))
+                    color = (int(x * 255 / self.width), fixed_value, int(y * 255 / self.height))
                 else:
-                    color = (int(y * 255 / HEIGHT), int(x * 255 / WIDTH), fixed_value)
+                    color = (int(y * 255 / self.height), int(x * 255 / self.width), fixed_value)
                 pixels[x, y] = color
         self.pil_image = img 
         return ImageTk.PhotoImage(img)
 
     def get_block_image(self, block_x, block_y):
-        left = block_x * SQUARE_SIZE
-        top = block_y * SQUARE_SIZE
-        box = (left, top, left + SQUARE_SIZE, top + SQUARE_SIZE)
+        left = block_x * self.square_size
+        top = block_y * self.square_size
+        box = (left, top, left + self.square_size, top + self.square_size)
         cropped = self.pil_image.crop(box)
         return ImageTk.PhotoImage(cropped)
 
     def prepare_blocks(self):
         edge_coords = []
-        for by in range(GRID_SIZE):
-            for bx in range(GRID_SIZE):
+        for by in range(self.grid_size):
+            for bx in range(self.grid_size):
                 block = self.get_block_image( bx, by)
                 self.blocks.append(block)
-                coord = [bx * SQUARE_SIZE, by * SQUARE_SIZE]
+                coord = [bx * self.square_size, by * self.square_size]
                 self.correct_coords.append(coord)
-                if bx == 0 or by == 0 or bx == 7 or by == 7:
+                if bx == 0 or by == 0 or bx == self.grid_size-1 or by == self.grid_size-1:
                     edge_coords.append(coord)
 
         shuffled_coords = self.correct_coords[:]
         random.shuffle(shuffled_coords)
 
         # 固定邊緣方塊
-        self.fix_coords = random.sample(edge_coords, 4)
+        self.fix_coords = random.sample(edge_coords, self.key_point)
         for fixed in self.fix_coords:
             correct_idx = self.correct_coords.index(fixed)
             now_idx = shuffled_coords.index(fixed)
@@ -228,7 +256,7 @@ class PuzzleApp:
         # 顯示固定標記
         for coord in self.fix_coords:
             x, y = coord
-            self.draw_cross_on_image_center(x, y, SQUARE_SIZE, 10)
+            self.draw_cross_on_image_center(x, y, self.square_size, 10)
 
         # 防止圖片被回收
         self.canvas.images = self.blocks
@@ -262,7 +290,7 @@ class PuzzleApp:
                             break
                         if len(self.selected) < 2:
                             x, y = cube.now_coordinate
-                            rect = self.canvas.create_rectangle(x, y, x + SQUARE_SIZE, y + SQUARE_SIZE, outline="black", width=2)
+                            rect = self.canvas.create_rectangle(x, y, x + self.square_size, y + self.square_size, outline="black", width=2)
                             self.outlines[cube] = rect
                             self.selected.append(cube)
 
@@ -305,13 +333,17 @@ class PuzzleApp:
         for i in self.cubes:
             if not i.is_correct():
                 x, y = i.now_coordinate
-                rect = self.canvas.create_rectangle(x, y, x + SQUARE_SIZE, y + SQUARE_SIZE, outline="red", width=2)
+                rect = self.canvas.create_rectangle(x, y, x + self.square_size, y + self.square_size, outline="red", width=2)
                 self.unmatch_dict[i]=rect
+                
+    def show_whole_picture(self):
+        plt.imshow(np.array(self.pil_image))       
+        plt.axis('off')
+        plt.show()
                 
     def start(self):
         self.root.mainloop()
         
-
 '''# 主程式
 if __name__ == "__main__":
     app = PuzzleApp()
