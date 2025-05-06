@@ -25,8 +25,9 @@ class Cube:
         return self.now_coordinate == self.ans_coordinate
 
 class PuzzleApp:
-    def __init__(self):
-        self.root = Tk()
+    def __init__(self, root, menu_frame, difficulty, mode):
+        #self.root = Tk()
+        self.root = root
         self.root.title("分割並打亂正方形")
         screenWidth = self.root.winfo_screenwidth() # 螢幕寬度
         screenHeight =self.root.winfo_screenheight() # 螢幕高度
@@ -299,7 +300,7 @@ class PuzzleApp:
         self.root.mainloop()
         
 
-# 主程式
+'''# 主程式
 if __name__ == "__main__":
     app = PuzzleApp()
-    app.start()
+    app.start()'''
