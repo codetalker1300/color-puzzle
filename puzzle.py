@@ -2,7 +2,8 @@ import tkinter as tk
 from tkinter import PhotoImage, messagebox
 from tkinter import *
 import random
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk,ImageOps
+from tkinter import filedialog
 
 PIXEL_SIZE = 2
 WIDTH, HEIGHT = 512, 512
@@ -24,8 +25,9 @@ class Cube:
         return self.now_coordinate == self.ans_coordinate
 
 class PuzzleApp:
-    def __init__(self):
-        self.root = Tk()
+    def __init__(self, root, menu_frame, difficulty, mode):
+        #self.root = Tk()
+        self.root = root
         self.root.title("分割並打亂正方形")
         screenWidth = self.root.winfo_screenwidth() # 螢幕寬度
         screenHeight =self.root.winfo_screenheight() # 螢幕高度
@@ -86,12 +88,14 @@ class PuzzleApp:
         
         #歸零兩個counter
         self.timer.config(text=f"時間 : {0:02}:{0:02}:{0:02}")
-        self.step_count.config(text=f"\t步數:{0}")
+        self.step_count.config(text=f"步數:{0}")
         
     def first_frame_init(self):    
         #第一個frame
         self.counter_frame =Frame(self.root)
         self.counter_frame.pack()
+        self.load_img=Button(self.counter_frame,text="load user picture",command=self.load_puzzle)
+        self.load_img.pack(side=LEFT)
         self.timer=Label(self.counter_frame,text=f"時間 : {0:02}:{0:02}:{0:02}",font=("Helvetica", 24))
         self.timer.pack(side=LEFT,padx=10)
         self.step_count=Label(self.counter_frame,text=f"步數:{0}",font=("Helvetica", 24))
@@ -110,7 +114,48 @@ class PuzzleApp:
         self.button_frame.pack()
         self.unmatch_btn=Button(self.button_frame,text="find unmatch block",command=self.find_unmatch)
         self.unmatch_btn.pack()
+    
+    def load_puzzle(self):
+        if self.running:
+            self.canvas.after_cancel(self.after_id)
+        filepath = filedialog.askopenfilename(title="選擇圖片",filetypes=[("圖片檔案", "*.jpg *.jpeg *.png")])
+        if filepath:
+            user_puzzle=Image.open(filepath)
+            width, height = user_puzzle.size
+            max_dim = max(height, width, 320)
+            border_w=max_dim-width
+            border_h=max_dim-height
+            padding=(border_w//2,border_h//2,border_w-border_w//2,border_h-border_h//2)
+            padded_image = ImageOps.expand(user_puzzle, border=padding, fill=(255,255,255))
+            self.pil_image = padded_image.resize((512,512))
+            self.canvas.delete("all")
+            #第一個Frame的變數
+            self.running=False
+            self.after_id=None
+            self.play_second=0
+            self.play_step=0
+            #第二個frame的變數
+            self.blocks = []
+            self.cubes = []
+            self.selected = []
+            self.outlines = {}
+            self.correct_coords = []
+            self.fix_coords = []
+            #第三個frame的變數
+            self.unmatch_dict={}
         
+            #在canva上劃出方塊
+            self.prepare_blocks()
+            #綁定滑鼠
+            self.bind_events()
+            
+            #歸零兩個counter
+            self.timer.config(text=f"時間 : {0:02}:{0:02}:{0:02}")
+            self.step_count.config(text=f"步數:{0}")
+        else:
+            print("使用者取消選擇")
+            return
+    
     def update_time(self):
         self.play_second+=1
         h = self.play_second // 3600
@@ -128,8 +173,8 @@ class PuzzleApp:
         axes = ['R', 'G', 'B']
         fixed_axis = random.choice(axes)
         fixed_value = random.randint(0, 255)
-        if fixed_value<=50:
-            fixed_value+=30
+        if fixed_value<=60:
+            fixed_value+=50
         print(f"固定軸：{fixed_axis}, 固定值：{fixed_value}")
 
         img = Image.new("RGB", (WIDTH, HEIGHT))
@@ -166,7 +211,7 @@ class PuzzleApp:
                     edge_coords.append(coord)
 
         shuffled_coords = self.correct_coords[:]
-        #random.shuffle(shuffled_coords)
+        random.shuffle(shuffled_coords)
 
         # 固定邊緣方塊
         self.fix_coords = random.sample(edge_coords, 4)
@@ -183,13 +228,25 @@ class PuzzleApp:
         # 顯示固定標記
         for coord in self.fix_coords:
             x, y = coord
-            self.canvas.create_oval(x+25, y+25, x+37, y+37, fill='black')
+            self.draw_cross_on_image_center(x, y, SQUARE_SIZE, 10)
 
         # 防止圖片被回收
         self.canvas.images = self.blocks
 
     def bind_events(self):
         self.canvas.bind("<Button-1>", self.on_click)
+        
+    def draw_cross_on_image_center(self, x, y, width,cross_size=10):
+        center_x = x + width // 2
+        center_y = y + width // 2 
+
+        # 白色外框線（寬度較粗）
+        self.canvas.create_line(center_x - cross_size, center_y, center_x + cross_size, center_y, fill='white', width=3)
+        self.canvas.create_line(center_x, center_y - cross_size, center_x, center_y + cross_size, fill='white', width=3)
+
+        # 黑色主十字線（置中在白線上）
+        self.canvas.create_line(center_x - cross_size, center_y, center_x + cross_size, center_y, fill='black', width=1)
+        self.canvas.create_line(center_x, center_y - cross_size, center_x, center_y + cross_size, fill='black', width=1)
 
     def on_click(self, event):
         overlapping = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
@@ -255,7 +312,7 @@ class PuzzleApp:
         self.root.mainloop()
         
 
-# 主程式
+'''# 主程式
 if __name__ == "__main__":
     app = PuzzleApp()
-    app.start()
+    app.start()'''

@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from color_diff import ColorDiffGame
-from test import PuzzleApp
+from puzzle import PuzzleApp
 
 class MainMenu:
     def __init__(self):

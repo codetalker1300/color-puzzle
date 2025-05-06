@@ -4,6 +4,8 @@ from tkinter import *
 import random
 from PIL import Image, ImageTk,ImageOps
 from tkinter import filedialog
+import matplotlib.pyplot as plt
+import numpy as np
 
 PIXEL_SIZE = 2
 WIDTH, HEIGHT = 512, 512
@@ -27,7 +29,7 @@ class Cube:
 class PuzzleApp:
     def __init__(self, root, menu_frame, difficulty, mode):
         #self.root = Tk()
-        self.root = root
+        self.root=root
         self.root.title("分割並打亂正方形")
         screenWidth = self.root.winfo_screenwidth() # 螢幕寬度
         screenHeight =self.root.winfo_screenheight() # 螢幕高度
@@ -113,8 +115,10 @@ class PuzzleApp:
         self.button_frame=Frame(self.root)
         self.button_frame.pack()
         self.unmatch_btn=Button(self.button_frame,text="find unmatch block",command=self.find_unmatch)
-        self.unmatch_btn.pack()
-    
+        self.unmatch_btn.pack(side=LEFT,padx=20)
+        self.show_img=Button(self.button_frame,text="show picture",command=self.show_whole_picture)
+        self.show_img.pack(side=LEFT)
+        
     def load_puzzle(self):
         if self.running:
             self.canvas.after_cancel(self.after_id)
@@ -173,8 +177,8 @@ class PuzzleApp:
         axes = ['R', 'G', 'B']
         fixed_axis = random.choice(axes)
         fixed_value = random.randint(0, 255)
-        if fixed_value<=50:
-            fixed_value+=30
+        if fixed_value<=60:
+            fixed_value+=50
         print(f"固定軸：{fixed_axis}, 固定值：{fixed_value}")
 
         img = Image.new("RGB", (WIDTH, HEIGHT))
@@ -207,7 +211,7 @@ class PuzzleApp:
                 self.blocks.append(block)
                 coord = [bx * SQUARE_SIZE, by * SQUARE_SIZE]
                 self.correct_coords.append(coord)
-                if bx == 0 or by == 0 or bx == 7 or by == 7:
+                if bx == 0 or by == 0 or bx == GRID_SIZE-1 or by == GRID_SIZE-1:
                     edge_coords.append(coord)
 
         shuffled_coords = self.correct_coords[:]
@@ -228,13 +232,26 @@ class PuzzleApp:
         # 顯示固定標記
         for coord in self.fix_coords:
             x, y = coord
-            self.canvas.create_oval(x+25, y+25, x+37, y+37, fill='black')
+            self.draw_cross_on_image_center(x, y, SQUARE_SIZE, 10)
 
         # 防止圖片被回收
         self.canvas.images = self.blocks
 
     def bind_events(self):
         self.canvas.bind("<Button-1>", self.on_click)
+
+    def draw_cross_on_image_center(self, x, y, width,cross_size=10):
+        center_x = x + width // 2
+        center_y = y + width // 2 
+
+        # 白色外框線（寬度較粗）
+        self.canvas.create_line(center_x - cross_size, center_y, center_x + cross_size, center_y, fill='white', width=3)
+        self.canvas.create_line(center_x, center_y - cross_size, center_x, center_y + cross_size, fill='white', width=3)
+
+        # 黑色主十字線（置中在白線上）
+        self.canvas.create_line(center_x - cross_size, center_y, center_x + cross_size, center_y, fill='black', width=1)
+        self.canvas.create_line(center_x, center_y - cross_size, center_x, center_y + cross_size, fill='black', width=1)
+
 
     def on_click(self, event):
         overlapping = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
@@ -295,12 +312,17 @@ class PuzzleApp:
                 x, y = i.now_coordinate
                 rect = self.canvas.create_rectangle(x, y, x + SQUARE_SIZE, y + SQUARE_SIZE, outline="red", width=2)
                 self.unmatch_dict[i]=rect
+    
+    def show_whole_picture(self):
+        plt.imshow(np.array(self.pil_image))           # 轉成 NumPy array 再顯示
+        plt.axis('off')
+        plt.show()
                 
     def start(self):
         self.root.mainloop()
         
 
-'''# 主程式
+# 主程式
 if __name__ == "__main__":
     app = PuzzleApp()
-    app.start()'''
+    app.start()
