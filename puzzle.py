@@ -24,18 +24,19 @@ class Cube:
 
 class PuzzleApp:
     def __init__(self, root, menu_frame, difficulty, mode):
-        
+        self.root = root
         self.menu_frame = menu_frame
         self.puzzle_frame = Frame(root)
         self.puzzle_frame.pack()
-        root.title("分割並打亂正方形")
-        screenWidth = root.winfo_screenwidth() # 螢幕寬度
-        screenHeight =root.winfo_screenheight() # 螢幕高度
+        self.root.title("分割並打亂正方形")
+        screenWidth = self.root.winfo_screenwidth() # 螢幕寬度
+        screenHeight =self.root.winfo_screenheight() # 螢幕高度
         w = 600 # 視窗寬
         h = 600 # 視窗高
         x=(screenWidth-w) / 2 # 視窗左上角x軸位置
         y=(screenHeight-h) / 2 # 視窗左上角Y軸
-        root.geometry("%dx%d+%d+%d"%(w,h,x,y))
+
+        self.root.geometry("%dx%d+%d+%d"%(w,h,x,y))
 
         #畫面建構需要的變數
         self.difficulty=difficulty
@@ -141,8 +142,11 @@ class PuzzleApp:
             self.square_size= self.width// self.grid_size
     
     def back_menu(self):
+        self.root.title("色彩遊戲選單")
+        self.root.geometry("420x320")
         self.puzzle_frame.destroy()
-        self.menu_frame.pack()
+        self.menu_frame.pack(pady=40)
+
     def load_puzzle(self):
         if self.running:
             self.canvas.after_cancel(self.after_id)

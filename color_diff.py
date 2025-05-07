@@ -3,29 +3,27 @@ import random
 
 class ColorDiffGame:
     def __init__(self, root, menu_frame, difficulty, mode):
+        self.root = root
         self.menu_frame = menu_frame
-        self.color_game = tk.Frame(root)
+        self.color_game = tk.Frame(self.root)
         self.color_game.pack()
-        root.title("色差遊戲")
-        root.geometry("420x540")
+        self.root.title("色差遊戲")
+        self.root.geometry("420x520")
         self.difficulty = difficulty
         self.max_size = int(difficulty[0])
-        #self.grid_size = 2
-        #self.grid_repeat_count = 0
+        self.mode = mode
         self.max_repeat = 3
         self.after_id = None
 
         self.canvas_size = 400
-        self.canvas = tk.Canvas(self.color_game, width=self.canvas_size, height=self.canvas_size + 40, bg="white")
+        self.canvas = tk.Canvas(self.color_game, width=self.canvas_size, height=self.canvas_size, bg="white")
         self.canvas.grid(row=0, column=0, columnspan=3, padx=5, pady=5)
 
-        #self.time_left = 60
-        #self.score = 0
-        self.info_label1 = tk.Label(self.color_game, text="", font=("Arial", 16))
-        self.info_label1.grid(row=1, column=0, columnspan=2, padx=5, pady=5)
+        self.timer_label = tk.Label(self.color_game, text="", font=("Arial", 16))
+        self.timer_label.grid(row=1, column=0, columnspan=2, padx=5, pady=5)
 
-        self.info_label2 = tk.Label(self.color_game, text="", font=("Arial", 16))
-        self.info_label2.grid(row=1, column=2, padx=5, pady=5)
+        self.level_label = tk.Label(self.color_game, text="", font=("Arial", 16))
+        self.level_label.grid(row=1, column=2, padx=5, pady=5)
 
         self.reload = tk.Button(self.color_game, text="重新開始",
                                       font=("Arial", 12), command=self.start_game)
@@ -46,35 +44,60 @@ class ColorDiffGame:
             self.color_game.after_cancel(self.after_id)
         self.grid_size = 2
         self.grid_repeat_count = 0
-        self.time_left = 60
         self.level = 0
         self.score = 0
-        self.update_timer()
+        self.skip.config(state="normal")
+        self.max_score = 30
+        if self.mode == "限時60秒":
+            self.time = 60
+            self.update_timer_limit()
+        else:
+            self.time = 0
+            self.update_timer_level()
         self.next_level()
 
-    def update_timer(self):
-        self.info_label1.config(text=f"剩餘時間：{self.time_left} 秒")
-        if self.time_left > 0:
-            self.time_left -= 1
-            self.after_id = self.color_game.after(1000, self.update_timer)
+    def update_timer_limit(self):
+        self.timer_label.config(text=f"剩餘時間：{self.time} 秒")
+        if self.time > 0:
+            self.time -= 1
+            self.after_id = self.color_game.after(1000, self.update_timer_limit)
         else:
             self.canvas.delete("all")
             self.canvas.create_text(self.canvas_size / 2, self.canvas_size / 2,
                                     text=f"遊戲結束！總分：{self.score}", font=("Arial", 24), fill="red")
-            self.info_label1.config(text=f"")
+            self.skip.config(state="disabled")
+            self.timer_label.config(text=f"")
+            self.level_label.config(text=f"")
+
+    def update_timer_level(self):
+        m = self.time  // 60
+        s = self.time % 60
+        self.timer_label.config(text=f"時間 ： {m:02}:{s:02}")
+        if self.score < self.max_score:
+            self.time += 1
+            self.after_id = self.color_game.after(1000, self.update_timer_level)
 
     def next_level(self):
-        if self.time_left <= 0:
-            self.info_label2.config(text=f"")
-            return
-
         self.canvas.delete("all")
+
+        if self.mode == "完成30關" and self.score >= self.max_score:
+            self.canvas.create_text(self.canvas_size / 2, self.canvas_size / 2,
+                                    text=f"遊戲結束！用時：{self.time // 60:02}:{self.time % 60:02}",
+                                    font=("Arial", 24), fill="red")
+            self.skip.config(state="disabled")
+            self.timer_label.config(text=f"")
+            self.level_label.config(text=f"")
+            return
+        
         self.level += 1
         base_color = [random.randint(50, 200) for _ in range(3)]
         diff_index = random.randint(0, self.grid_size ** 2 - 1)
         diff_color = base_color[:]
-        diff_color[random.randint(0, 2)] += random.randint(5, 20)
-        self.info_label2.config(text=f"第{self.level}關")
+        if self.level<=20:
+            diff_color[random.randint(0, 2)] += random.randint(15, 30)
+        else:
+            diff_color[random.randint(0, 2)] += random.randint(10, 20)
+        self.level_label.config(text=f"第{self.level}關")
         diff_color = [min(255, c) for c in diff_color]
 
         spacing = 10
@@ -129,5 +152,7 @@ class ColorDiffGame:
             self.next_level()
 
     def back_menu(self):
+        self.root.title("色彩遊戲選單")
+        self.root.geometry("420x320")
         self.color_game.destroy()
-        self.menu_frame.pack()
+        self.menu_frame.pack(pady=40)
