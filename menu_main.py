@@ -29,7 +29,7 @@ class MainMenu:
         self.diff_combobox.grid(row=2, column=1, padx=5, pady=5)
         
         tk.Label(self.menu_frame, text="選擇模式：", font=("Arial", 12)).grid(row=3, column=0, padx=5, pady=5)
-        self.mode_opt = ["限時60秒", "固定30關"]
+        self.mode_opt = ["限時60秒", "完成30關", "無盡"]
         self.mode_var = tk.StringVar()
         self.mode_combobox = ttk.Combobox(self.menu_frame, textvariable=self.mode_var, values=self.mode_opt, state="readonly")
         self.mode_combobox.current(0)
@@ -47,8 +47,8 @@ class MainMenu:
         self.diff_combobox["values"] = {"色差遊戲": ["6x6", "7x7", "8x8", "9x9"],
                                         "漸層/拼圖遊戲": ["簡單", "中等", "困難",]}[game]
         self.diff_combobox.current(0)
-        self.mode_combobox["values"] = {"色差遊戲": ["限時60秒", "固定30關"],
-                                        "漸層/拼圖遊戲": ["限制步數", "無限"]}[game]
+        self.mode_combobox["values"] = {"色差遊戲": ["限時60秒", "完成30關", "無盡"],
+                                        "漸層/拼圖遊戲": ["限制步數", "無盡"]}[game]
         self.mode_combobox.current(0)
 
     def start_game(self):
