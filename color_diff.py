@@ -1,5 +1,7 @@
 import tkinter as tk
 import random
+from tkinter import messagebox
+import os
 
 class ColorDiffGame:
     def __init__(self, root, menu_frame, difficulty, mode):
@@ -17,13 +19,13 @@ class ColorDiffGame:
 
         self.canvas_size = 400
         self.canvas = tk.Canvas(self.color_game, width=self.canvas_size, height=self.canvas_size, bg="white")
-        self.canvas.grid(row=0, column=0, columnspan=3, padx=5, pady=5)
+        self.canvas.grid(row=1, column=0, columnspan=4, padx=5, pady=5)
 
         self.timer_label = tk.Label(self.color_game, text="", font=("Arial", 16))
-        self.timer_label.grid(row=1, column=0, columnspan=2, padx=5, pady=5)
+        self.timer_label.grid(row=0, column=0, columnspan=2, padx=5, pady=5)
 
         self.level_label = tk.Label(self.color_game, text="", font=("Arial", 16))
-        self.level_label.grid(row=1, column=2, padx=5, pady=5)
+        self.level_label.grid(row=0, column=2, columnspan=2, padx=5, pady=5)
 
         self.reload = tk.Button(self.color_game, text="重新開始",
                                       font=("Arial", 12), command=self.start_game)
@@ -33,9 +35,14 @@ class ColorDiffGame:
                                       font=("Arial", 12), command=self.next_level)
         self.skip.grid(row=2, column=1, padx=5, pady=5)
 
+        self.endbtn = tk.Button(self.color_game, text="結算",
+                                      font=("Arial", 12), command=self.end_game)
+        self.endbtn.grid(row=2, column=2, padx=5, pady=5)
+        self.endbtn.grid_remove()
+
         self.back = tk.Button(self.color_game, text="回menu",
                                       font=("Arial", 12), command=self.back_menu)
-        self.back.grid(row=2, column=2, padx=5, pady=5)
+        self.back.grid(row=2, column=3, padx=5, pady=5)
 
         self.start_game()  
 
@@ -51,7 +58,12 @@ class ColorDiffGame:
         if self.mode == "限時60秒":
             self.time = 60
             self.update_timer_limit()
+        elif self.mode == "完成30關":
+            self.time = 0
+            self.update_timer_level()
         else:
+            self.endbtn.grid()
+            self.endbtn.config(state="normal")
             self.time = 0
             self.update_timer_level()
         self.next_level()
@@ -62,31 +74,46 @@ class ColorDiffGame:
             self.time -= 1
             self.after_id = self.color_game.after(1000, self.update_timer_limit)
         else:
-            self.canvas.delete("all")
-            self.canvas.create_text(self.canvas_size / 2, self.canvas_size / 2,
-                                    text=f"遊戲結束！總分：{self.score}", font=("Arial", 24), fill="red")
-            self.skip.config(state="disabled")
-            self.timer_label.config(text=f"")
-            self.level_label.config(text=f"")
+            self.end_game()
 
     def update_timer_level(self):
-        m = self.time  // 60
+        if self.mode == "完成30關" and self.score >= self.max_score:
+            return
+        m = self.time // 60
         s = self.time % 60
         self.timer_label.config(text=f"時間 ： {m:02}:{s:02}")
-        if self.score < self.max_score:
-            self.time += 1
-            self.after_id = self.color_game.after(1000, self.update_timer_level)
+        self.time += 1
+        self.after_id = self.color_game.after(1000, self.update_timer_level)
+
+    def end_game(self):
+        self.canvas.delete("all")
+        if self.mode == "限時60秒":
+            self.canvas.create_text(self.canvas_size / 2, self.canvas_size / 2,
+                                    text=f"遊戲結束！\n總分：{self.score}", font=("Arial", 24), fill="red")
+        elif self.mode == "完成30關":
+            self.canvas.create_text(self.canvas_size / 2, self.canvas_size / 2,
+                                    text=f"遊戲結束！\n用時：{self.time // 60:02}:{self.time % 60:02}",
+                                    font=("Arial", 24), fill="red")
+        else:
+            self.canvas.create_text(self.canvas_size / 2, self.canvas_size / 2,
+                                    text=f"遊戲結束！\n總分：{self.score}\n用時：{self.time // 60:02}:{self.time % 60:02}",
+                                    font=("Arial", 24), fill="red")
+            self.endbtn.config(state="disabled")
+            self.color_game.after_cancel(self.after_id)
+        self.skip.config(state="disabled")
+
+        file_path = os.path.dirname(os.path.realpath(__file__))+ "/colordiff_history.csv"
+        try:
+            with open(file_path, 'a', encoding='utf-8') as file:
+                file.write(f"{self.difficulty},{self.mode},{self.score},{self.time}\n")
+        except Exception:
+            messagebox.showerror("存檔錯誤", "儲存成績失敗")
 
     def next_level(self):
         self.canvas.delete("all")
 
         if self.mode == "完成30關" and self.score >= self.max_score:
-            self.canvas.create_text(self.canvas_size / 2, self.canvas_size / 2,
-                                    text=f"遊戲結束！用時：{self.time // 60:02}:{self.time % 60:02}",
-                                    font=("Arial", 24), fill="red")
-            self.skip.config(state="disabled")
-            self.timer_label.config(text=f"")
-            self.level_label.config(text=f"")
+            self.end_game()
             return
         
         self.level += 1
@@ -96,7 +123,7 @@ class ColorDiffGame:
         if self.level<=20:
             diff_color[random.randint(0, 2)] += random.randint(15, 30)
         else:
-            diff_color[random.randint(0, 2)] += random.randint(10, 20)
+            diff_color[random.randint(0, 2)] += random.randint(5, 20)
         self.level_label.config(text=f"第{self.level}關")
         diff_color = [min(255, c) for c in diff_color]
 
