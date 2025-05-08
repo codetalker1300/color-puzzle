@@ -1,7 +1,9 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
 from color_diff import ColorDiffGame
 from puzzle import PuzzleApp
+import os
 
 class MainMenu:
     def __init__(self):
@@ -48,7 +50,7 @@ class MainMenu:
                                         "漸層/拼圖遊戲": ["簡單", "中等", "困難",]}[game]
         self.diff_combobox.current(0)
         self.mode_combobox["values"] = {"色差遊戲": ["限時60秒", "完成30關", "無盡"],
-                                        "漸層/拼圖遊戲": ["限制步數", "無盡"]}[game]
+                                        "漸層/拼圖遊戲": ["挑戰", "無盡"]}[game]
         self.mode_combobox.current(0)
 
     def start_game(self):
@@ -62,8 +64,35 @@ class MainMenu:
             PuzzleApp(self.root, self.menu_frame, difficulty, mode)
 
     def check_score(self):
-        return
-
+        game = self.game_var.get()
+        score_window = tk.Toplevel()
+        score_window.title("成績紀錄")
+        file_path = os.path.dirname(os.path.realpath(__file__))
+        if game == "色差遊戲":
+            head_last = "分數"
+            file_path += "/colordiff_history.csv"
+        else:
+            head_last = "步數"
+            file_path += "/puzzle_history.csv"
+        cols = ("diff", "mode", "sec", "score_step")
+        head = ["難度", "模式", "時間", head_last]
+        tree = ttk.Treeview(score_window, columns=cols, show="headings")
+        tree.pack()
+        for i in range(4):
+            tree.heading(cols[i], text = head[i])
+            tree.column(cols[i], anchor=tk.CENTER)
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                for line in file:
+                    vals = line.split(",")
+                    sec = int(vals[2])
+                    if vals[1] == "限時60秒":
+                        sec = 60
+                    vals[2] = f"{sec//60:02}:{sec%60:02}"
+                    tree.insert("",index=tk.END, values=vals)
+        except Exception:
+            messagebox.showerror("讀檔錯誤", f"暫無資料或載入失敗")
+    
     def start(self):
         self.root.mainloop()
 
