@@ -6,6 +6,7 @@ from PIL import Image, ImageTk,ImageOps
 from tkinter import filedialog
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 
 class Cube:
@@ -28,56 +29,39 @@ class PuzzleApp:
         self.menu_frame = menu_frame
         self.puzzle_frame = Frame(root)
         self.puzzle_frame.pack()
-        self.root.title("分割並打亂正方形")
-        screenWidth = self.root.winfo_screenwidth() # 螢幕寬度
-        screenHeight =self.root.winfo_screenheight() # 螢幕高度
+        root.title("分割並打亂正方形")
+        screenWidth = root.winfo_screenwidth() # 螢幕寬度
+        screenHeight =root.winfo_screenheight() # 螢幕高度
         w = 600 # 視窗寬
         h = 600 # 視窗高
         x=(screenWidth-w) / 2 # 視窗左上角x軸位置
         y=(screenHeight-h) / 2 # 視窗左上角Y軸
-
-        self.root.geometry("%dx%d+%d+%d"%(w,h,x,y))
+        root.geometry("%dx%d+%d+%d"%(w,h,x,y))
 
         #畫面建構需要的變數
         self.difficulty=difficulty
+        self.mode=mode
         self.width=512
         self.height = 512
         self.grid_size = 8
         self.square_size= self.width// self.grid_size
         self.key_point=4
-        
-         #設定難度
-        self.handle_variable()
-        self.first_frame_init()
-        self.second_frame_init()
-        self.third_frame_init()
-        
-        #第一個Frame的變數
-        self.running=False
         self.after_id=None
-        self.play_second=0
-        self.play_step=0
-        #第二個frame的變數
-        self.blocks = []
-        self.cubes = []
-        self.selected = []
-        self.outlines = {}
-        self.correct_coords = []
-        self.fix_coords = []
-        #第三個frame的變數
-        self.unmatch_dict={}
-       
-        #生成漸層圖片
-        self.gradient_image = self.generate_fixed_axis_gradient()
-        #在canva上劃出方塊
-        self.prepare_blocks()
-        #綁定滑鼠
-        self.bind_events()
+        self.filepath=None
+        #設定難度
+        
+        self.create_gameState_panel()
+        self.create_canva()
+        self.create_operation_panel()
+        
+        self.reset()
+    
     def reset(self):
         self.canvas.delete("all")
         #第一個Frame的變數
         self.running=False
-        self.after_id=None
+        if self.after_id:
+            self.canvas.after_cancel(self.after_id)
         self.play_second=0
         self.play_step=0
         #第二個frame的變數
@@ -89,20 +73,22 @@ class PuzzleApp:
         self.fix_coords = []
         #第三個frame的變數
         self.unmatch_dict={}
+        self.help=True
+        
+        #歸零兩個counter
+        self.timer.config(text=f"時間 : {0:02}:{0:02}:{0:02}")
         
         #生成漸層圖片
-        self.gradient_image = self.generate_fixed_axis_gradient()
+        if not self.filepath:
+            self.gradient_image = self.generate_fixed_axis_gradient()
+        self.handle_difficulty()
         #在canva上劃出方塊
         self.prepare_blocks()
         #綁定滑鼠
         self.bind_events()
         
-        #歸零兩個counter
-        self.timer.config(text=f"時間 : {0:02}:{0:02}:{0:02}")
-        self.step_count.config(text=f"步數:{0}")
-        
-    def first_frame_init(self):    
-        #第一個frame
+    def create_gameState_panel(self):    
+        # UI
         self.counter_frame =Frame(self.puzzle_frame)
         self.counter_frame.pack()
         self.back_btn=Button(self.counter_frame,text="back previous page",command=self.back_menu)
@@ -114,45 +100,52 @@ class PuzzleApp:
         self.step_count=Label(self.counter_frame,text=f"步數:{0}",font=("Helvetica", 20))
         self.step_count.pack(side=LEFT)
         
-    def second_frame_init(self):
-        # 第二個Frame + Canvas
+    def create_canva(self):
+        # UI
         self.canva_frame = Frame(self.puzzle_frame)
         self.canva_frame.pack()
         self.canvas = tk.Canvas(self.canva_frame, width=self.width, height=self.height)
         self.canvas.pack()
-        
-    def third_frame_init(self):
-        #第三個frame
+
+    def create_operation_panel(self):
+        # UI
         self.button_frame=Frame(self.puzzle_frame)
         self.button_frame.pack()
         self.unmatch_btn=Button(self.button_frame,text="find unmatch block",command=self.find_unmatch)
         self.unmatch_btn.pack(side=LEFT,padx=20)
         self.show_img=Button(self.button_frame,text="show picture",command=self.show_whole_picture)
         self.show_img.pack(side=LEFT)
+        self.re_load=Button(self.button_frame,text="reload",command=self.reset)
+        self.re_load.pack(side=LEFT,padx=10)
     
-    def handle_variable(self):
+    def handle_difficulty(self):
         if self.difficulty=="簡單":
+            if self.mode=="挑戰":
+                self.play_step=50
             self.grid_size= 6
-            self.square_size= self.width// self.grid_size
         elif self.difficulty=="中等":
+            if self.mode=="挑戰":
+                self.play_step=90
             self.grid_size= 8
-            self.square_size= self.width// self.grid_size
         elif self.difficulty=="困難":
+            if self.mode=="挑戰":
+                self.play_step=110                
             self.grid_size= 9
-            self.square_size= self.width// self.grid_size
-    
+        self.step_count.config(text=f"步數:{self.play_step}")
+        self.square_size= self.width// self.grid_size
+            
     def back_menu(self):
-        self.root.title("色彩遊戲選單")
+        self.root.title("色差遊戲")
         self.root.geometry("420x320")
         self.puzzle_frame.destroy()
         self.menu_frame.pack(pady=40)
-
     def load_puzzle(self):
         if self.running:
             self.canvas.after_cancel(self.after_id)
-        filepath = filedialog.askopenfilename(title="選擇圖片",filetypes=[("圖片檔案", "*.jpg *.jpeg *.png")])
-        if filepath:
-            user_puzzle=Image.open(filepath)
+            
+        self.filepath = filedialog.askopenfilename(title="選擇圖片",filetypes=[("圖片檔案", "*.jpg *.jpeg *.png")])
+        if self.filepath:
+            user_puzzle=Image.open(self.filepath)
             width, height = user_puzzle.size
             max_dim = max(height, width, 320)
             border_w=max_dim-width
@@ -161,31 +154,13 @@ class PuzzleApp:
             padded_image = ImageOps.expand(user_puzzle, border=padding, fill=(255,255,255))
             self.pil_image = padded_image.resize((512,512))
             self.canvas.delete("all")
-            #第一個Frame的變數
-            self.running=False
-            self.after_id=None
-            self.play_second=0
-            self.play_step=0
-            #第二個frame的變數
-            self.blocks = []
-            self.cubes = []
-            self.selected = []
-            self.outlines = {}
-            self.correct_coords = []
-            self.fix_coords = []
-            #第三個frame的變數
-            self.unmatch_dict={}
-        
-            #在canva上劃出方塊
-            self.prepare_blocks()
-            #綁定滑鼠
-            self.bind_events()
             
-            #歸零兩個counter
-            self.timer.config(text=f"時間 : {0:02}:{0:02}:{0:02}")
-            self.step_count.config(text=f"步數:{0}")
+            self.reset()
+            self.filepath = None
         else:
             print("使用者取消選擇")
+            if self.running:
+                self.update_time()
             return
     
     def update_time(self):
@@ -198,8 +173,14 @@ class PuzzleApp:
         self.after_id=self.canvas.after(1000,self.update_time)  # 每1000毫秒呼叫自己
     
     def update_step(self):
-        self.play_step+=1
-        self.step_count.config(text=f"步數:{self.play_step}")
+        try:            
+            if self.mode=="挑戰":
+                self.play_step-=1
+            else:
+                self.play_step+=1
+            self.step_count.config(text=f"步數:{self.play_step}")
+        except Exception as e:
+            print(f"EXCEPTION: {e}")
         
     def generate_fixed_axis_gradient(self):
         axes = ['R', 'G', 'B']
@@ -323,22 +304,35 @@ class PuzzleApp:
                                     self.canvas.after_cancel(self.after_id)
                                     self.after_id = None
                                     self.running = False
+                                
+                                try:
+                                    file_path=os.path.dirname(os.path.realpath(__file__))+"\puzzle_history.csv"
+                                    with open(file_path, 'a', encoding='utf-8') as file:
+                                        file.write(f"{self.difficulty},{self.mode},{self.play_second},{self.play_step}\n")
+                                except Exception as e:
+                                    print(f"EXCEPTION: {e}")
+                                    messagebox.showerror("存檔錯誤", "儲存成績失敗")
+                                    
                                 ans=messagebox.askyesno("確認", "恭喜破關，是否在玩一次？")
                                 if ans:
                                     self.reset()
                                 else:
-                                    self.canvas.delete("all")
-                                    self.timer.config(text=f"時間 : {0:02}:{0:02}:{0:02}")
-                                    self.step_count.config(text=f"\t步數:{0}")    
+                                    self.back_menu()
+                        if self.play_step<=0:
+                            messagebox.showerror("You Lose","步數用盡，你輸了")
+                            self.back_menu()
                     break
             break
         
     def find_unmatch(self):
+        if not self.help:
+            return
         for i in self.cubes:
             if not i.is_correct():
                 x, y = i.now_coordinate
                 rect = self.canvas.create_rectangle(x, y, x + self.square_size, y + self.square_size, outline="red", width=2)
                 self.unmatch_dict[i]=rect
+        self.help=False
                 
     def show_whole_picture(self):
         plt.imshow(np.array(self.pil_image))       

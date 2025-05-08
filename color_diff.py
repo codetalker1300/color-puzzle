@@ -105,7 +105,7 @@ class ColorDiffGame:
         file_path = os.path.dirname(os.path.realpath(__file__))+ "/colordiff_history.csv"
         try:
             with open(file_path, 'a', encoding='utf-8') as file:
-                file.write(f"{self.difficulty},{self.mode},{self.score},{self.time}\n")
+                file.write(f"{self.difficulty},{self.mode},{self.time},{self.score}\n")
         except Exception:
             messagebox.showerror("存檔錯誤", "儲存成績失敗")
 
