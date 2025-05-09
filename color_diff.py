@@ -17,15 +17,15 @@ class ColorDiffGame:
         self.max_repeat = 3
         self.after_id = None
 
-        self.canvas_size = 400
-        self.canvas = tk.Canvas(self.color_game, width=self.canvas_size, height=self.canvas_size, bg="white")
-        self.canvas.grid(row=1, column=0, columnspan=4, padx=5, pady=5)
-
         self.timer_label = tk.Label(self.color_game, text="", font=("Arial", 16))
         self.timer_label.grid(row=0, column=0, columnspan=2, padx=5, pady=5)
 
         self.level_label = tk.Label(self.color_game, text="", font=("Arial", 16))
         self.level_label.grid(row=0, column=2, columnspan=2, padx=5, pady=5)
+
+        self.canvas_size = 400
+        self.canvas = tk.Canvas(self.color_game, width=self.canvas_size, height=self.canvas_size, bg="white")
+        self.canvas.grid(row=1, column=0, columnspan=4, padx=5, pady=5)
 
         self.reload = tk.Button(self.color_game, text="重新開始",
                                       font=("Arial", 12), command=self.start_game)
@@ -116,6 +116,7 @@ class ColorDiffGame:
             self.end_game()
             return
         
+        #生出統一顏色跟加上一點差距的
         self.level += 1
         base_color = [random.randint(50, 200) for _ in range(3)]
         diff_index = random.randint(0, self.grid_size ** 2 - 1)
@@ -127,6 +128,7 @@ class ColorDiffGame:
         self.level_label.config(text=f"第{self.level}關")
         diff_color = [min(255, c) for c in diff_color]
 
+        #計算版面配置
         spacing = 10
         total_spacing = (self.grid_size + 1) * spacing
         box_size = (self.canvas_size - total_spacing) / self.grid_size
@@ -141,7 +143,7 @@ class ColorDiffGame:
                 y1 = spacing + i * (box_size + spacing)
                 x2 = x1 + box_size
                 y2 = y1 + box_size
-                if idx == diff_index:
+                if idx == diff_index: #紀錄正確答案座標
                     self.correct_box = (x1, y1, x2, y2)
                 rect = self.create_round_rect(x1, y1, x2, y2, radius, fill=hex_color, outline="")
                 self.canvas.tag_bind(rect, '<Button-1>', self.check_answer)
@@ -154,6 +156,7 @@ class ColorDiffGame:
         else:
             self.grid_repeat_count = 0
 
+    #畫圓角正方形
     def create_round_rect(self, x1, y1, x2, y2, radius=10, **kwargs):
         points = [
             x1 + radius, y1,
