@@ -66,51 +66,54 @@ class MainMenu:
             PuzzleApp(self.root, self.menu_frame, difficulty, mode)
 
     #控制顯示成績紀錄的排序
-    def treeview_sortCols(self, col):
+    def treeview_sortCols(self, col, head):
 
         lst = [st for st in self.tree.get_children("")]
         
         self.reverseFlag[col] = not self.reverseFlag[col] #改變正反序
+        icon = "▲" if self.reverseFlag[col] else "▼"
+        self.tree.heading(col, text = icon+head,
+                            command=lambda c=col, h=head: self.treeview_sortCols(c,h))
         re = 1 if self.reverseFlag[col] else -1 #對時間、分/步數有用的正反序
+        re_mode = 1 if self.reverseFlag["mode"] else -1 #對模式有用的正反序
+        re_diff = 1 if self.reverseFlag["diff"] else -1 #對難度有用的正反序
 
         mode_priority = {"限時60秒": 0, "完成30關": 1, "挑戰": 2, "無盡": 3}
         diff_priority = {"簡單": 0, "中等": 1, "困難": 2, "6x6":3, "7x7":4, "8x8":5, "9x9":6}
         if col == "mode": #先排模式後排難度
-            lst.sort(key=lambda item: (mode_priority.get(self.tree.set(item, "mode"), 999),
-                                       diff_priority.get(self.tree.set(item, "diff"), 999)),
-                                       reverse=self.reverseFlag[col])
+            lst.sort(key=lambda item: (mode_priority.get(self.tree.set(item, "mode"), 999)*re_mode,
+                                       diff_priority.get(self.tree.set(item, "diff"), 999)*re_diff))
             self.sortFlag = 1
         elif col == "diff": #先排難度後排模式
-            lst.sort(key=lambda item: (diff_priority.get(self.tree.set(item, "diff"), 999),
-                                       mode_priority.get(self.tree.set(item, "mode"), 999)),
-                                       reverse=self.reverseFlag[col])
+            lst.sort(key=lambda item: (diff_priority.get(self.tree.set(item, "diff"), 999)*re_diff,
+                                       mode_priority.get(self.tree.set(item, "mode"), 999)*re_mode))
             self.sortFlag = 2
         elif col == "score_step": #步數
+            self.tree.heading("sec", text = "遊玩時間", #時間有icon的話刪掉
+                            command=lambda c="sec", h="遊玩時間": self.treeview_sortCols(c,h)) 
             if self.sortFlag == 0: #直接排
                 lst.sort(key=lambda item: (int(self.tree.set(item, col))*re))
             elif self.sortFlag == 1: #先排模式後排難度再排
-                lst.sort(key=lambda item: (mode_priority.get(self.tree.set(item, "mode"), 999),
-                                           diff_priority.get(self.tree.set(item, "diff"), 999),
-                                           int(self.tree.set(item, col))*re),
-                                           reverse=self.reverseFlag["mode"])
+                lst.sort(key=lambda item: (mode_priority.get(self.tree.set(item, "mode"), 999)*re_mode,
+                                           diff_priority.get(self.tree.set(item, "diff"), 999)*re_diff,
+                                           int(self.tree.set(item, col))*re))
             else:                    #先排難度後排模式再排
-                lst.sort(key=lambda item: (diff_priority.get(self.tree.set(item, "diff"), 999),
-                                           mode_priority.get(self.tree.set(item, "mode"), 999),                                           
-                                           int(self.tree.set(item, col))*re),
-                                           reverse=self.reverseFlag["diff"])
+                lst.sort(key=lambda item: (diff_priority.get(self.tree.set(item, "diff"), 999)*re_diff,
+                                           mode_priority.get(self.tree.set(item, "mode"), 999)*re_mode,                                           
+                                           int(self.tree.set(item, col))*re))
         else: #時間
+            self.tree.heading(self.cols[3], text = self.head[3], #分/步數有icon的話刪掉
+                            command=lambda c=self.cols[3], h=self.head[3]: self.treeview_sortCols(c,h)) 
             if self.sortFlag == 0: #直接排
                 lst.sort(key=lambda item: (int(self.tree.item(item, "text"))*re))
             elif self.sortFlag == 1: #先排模式後排難度再排
-                lst.sort(key=lambda item: (mode_priority.get(self.tree.set(item, "mode"), 999),
-                                           diff_priority.get(self.tree.set(item, "diff"), 999),
-                                           int(self.tree.item(item, "text"))*re),
-                                           reverse=self.reverseFlag["mode"])
+                lst.sort(key=lambda item: (mode_priority.get(self.tree.set(item, "mode"), 999)*re_mode,
+                                           diff_priority.get(self.tree.set(item, "diff"), 999)*re_diff,
+                                           int(self.tree.item(item, "text"))*re))
             else:                    #先排難度後排模式再排
-                lst.sort(key=lambda item: (diff_priority.get(self.tree.set(item, "diff"), 999),
-                                           mode_priority.get(self.tree.set(item, "mode"), 999),                                           
-                                           int(self.tree.item(item, "text"))*re),
-                                           reverse=self.reverseFlag["diff"])
+                lst.sort(key=lambda item: (diff_priority.get(self.tree.set(item, "diff"), 999)*re_diff,
+                                           mode_priority.get(self.tree.set(item, "mode"), 999)*re_mode,                                           
+                                           int(self.tree.item(item, "text"))*re))
 
         for index, item in enumerate(lst):
             self.tree.move(item, "", index)
@@ -130,16 +133,17 @@ class MainMenu:
         else:
             head_last = "移動步數"
             file_path += "/puzzle_history.csv"
-        cols = ("diff", "mode", "sec", "score_step")
-        head = ["難度", "模式", "遊玩時間", head_last]
-        self.tree = ttk.Treeview(score_window, columns=cols, show="headings")
+        self.cols = ("diff", "mode", "sec", "score_step")
+        self.head = ["難度", "模式", "遊玩時間", head_last]
+        self.tree = ttk.Treeview(score_window, columns=self.cols, show="headings")
         self.tree.pack()
         self.reverseFlag = {} #正反序
         self.sortFlag = 0 #排序右兩項會用到
         for i in range(4):
-            self.tree.heading(cols[i], text = head[i])
-            self.tree.column(cols[i], anchor=tk.CENTER, width=120)
-            self.reverseFlag[cols[i]] = True
+            self.tree.heading(self.cols[i], text = self.head[i],
+                              command=lambda c=self.cols[i], h=self.head[i]: self.treeview_sortCols(c,h))
+            self.tree.column(self.cols[i], anchor=tk.CENTER, width=120)
+            self.reverseFlag[self.cols[i]] = False
         self.tree.tag_configure("evenColor", background="lightblue")
         self.tree.tag_configure("oddColor", background="white")
         bg = 1
@@ -162,10 +166,7 @@ class MainMenu:
                     bg += 1
         except Exception:
             messagebox.showerror("讀檔錯誤", f"暫無資料或載入失敗")
-        
-        for i in range(4):
-            self.tree.heading(cols[i], text = head[i],
-                              command=lambda c=cols[i]: self.treeview_sortCols(c))
+            
     
     def start(self):
         self.root.mainloop()
