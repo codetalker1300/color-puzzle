@@ -143,7 +143,7 @@ class PuzzleApp:
     def handle_difficulty(self):
         if self.difficulty=="簡單":
             if self.mode=="挑戰":
-                self.play_step=1
+                self.play_step=50
                 self.max_strp_level=5
             self.grid_size= 6
         elif self.difficulty=="中等":
@@ -460,7 +460,7 @@ class Stroop:
         remain_colors = [c for c in self.colors if c not in self.topic]
         self.opt_word = self.topic + random.sample(remain_colors,2) #選項的字，一定有兩個是題目上的
         random.shuffle(self.opt_word) 
-        opt_color = [self.topic[0]] + random.choices(self.colors,k=3) #選項的顏色，重複隨機選，含題目顯示的文字作為顏色
+        opt_color = [self.topic[0] for _ in range(4)]# + random.choices(self.colors,k=3) #選項的顏色，重複隨機選，含題目顯示的文字作為顏色
         random.shuffle(opt_color)
         for idx, btn in enumerate(self.btns):
             btn.config(text=self.opt_word[idx][0], fg=opt_color[idx][1])
