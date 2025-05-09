@@ -145,12 +145,16 @@ class MainMenu:
         bg = 1
         try:
             with open(file_path, 'r', encoding='utf-8') as file:
+                data = []
                 for line in file:
                     vals = line.split(",")
                     sec = int(vals[2])
                     if vals[1] == "限時60秒":
                         sec = 60
                     vals[2] = f"{sec//60:02}:{sec%60:02}"
+                    data.append((sec, vals))
+                data.reverse()
+                for sec, vals in data:
                     if bg % 2 == 0:
                         self.tree.insert("", text = sec,index=tk.END, values=vals, tags=("evenColor"))
                     else:
