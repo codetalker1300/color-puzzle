@@ -124,7 +124,7 @@ class MainMenu:
     def check_score(self):
         game = self.game_var.get()
         score_window = tk.Toplevel()
-        score_window.title("成績紀錄")
+        score_window.title(f"{game} 成績紀錄")
         score_window.grab_set()    # 阻止使用者與其他視窗互動
         file_path = os.path.dirname(os.path.realpath(__file__))
         if game == "色差遊戲":
