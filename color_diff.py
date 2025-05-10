@@ -9,7 +9,7 @@ class ColorDiffGame:
         self.menu_frame = menu_frame
         self.color_game = tk.Frame(self.root)
         self.color_game.pack()
-        self.root.title("色差遊戲")
+        self.root.title(f"色差遊戲 最高{difficulty} - {mode}")
         self.root.geometry("420x520")
         self.difficulty = difficulty
         self.max_size = int(difficulty[0])
