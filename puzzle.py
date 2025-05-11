@@ -392,9 +392,10 @@ class PuzzleApp:
 
     #顯示整張圖片     
     def show_whole_picture(self):
-        plt.figure()
+        plt.figure(figsize=(5.12, 5.12), dpi=100)
         plt.imshow(np.array(self.pil_image))
         plt.axis('off')
+        plt.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)  
         plt.show()
         
     def start(self):
