@@ -70,7 +70,7 @@ class MainMenu:
 
         lst = [st for st in self.tree.get_children("")]
         
-        if not self.reverseFlag[col]:
+        if self.reverseFlag[col] == None:
             self.reverseFlag[col] = False
         self.reverseFlag[col] = not self.reverseFlag[col] #改變正反序
         icon = "▲" if self.reverseFlag[col] else "▼"
