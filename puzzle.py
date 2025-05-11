@@ -220,9 +220,7 @@ class PuzzleApp:
     def generate_fixed_axis_gradient(self):
         axes = ['R', 'G', 'B']
         fixed_axis = random.choice(axes)
-        fixed_value = random.randint(0, 255)
-        if fixed_value<=60:
-            fixed_value+=50
+        fixed_value = random.randint(50, 230)
         print(f"固定軸：{fixed_axis}, 固定值：{fixed_value}")
 
         img = Image.new("RGB", (self.width, self.height))
