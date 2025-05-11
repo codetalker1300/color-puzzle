@@ -59,12 +59,12 @@ class ColorDiffGame:
             self.time = 60
             self.update_timer_limit()
         elif self.mode == "完成30關":
-            self.time = 0
+            self.time = -1
             self.update_timer_level()
         else:
             self.endbtn.grid()
             self.endbtn.config(state="normal")
-            self.time = 0
+            self.time = -1
             self.update_timer_level()
         self.next_level()
 
@@ -79,10 +79,10 @@ class ColorDiffGame:
     def update_timer_level(self):
         if self.mode == "完成30關" and self.score >= self.max_score:
             return
+        self.time += 1
         m = self.time // 60
         s = self.time % 60
         self.timer_label.config(text=f"時間 ： {m:02}:{s:02}")
-        self.time += 1
         self.after_id = self.color_game.after(1000, self.update_timer_level)
 
     def end_game(self):
