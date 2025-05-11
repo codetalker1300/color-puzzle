@@ -70,13 +70,15 @@ class MainMenu:
 
         lst = [st for st in self.tree.get_children("")]
         
+        if not self.reverseFlag[col]:
+            self.reverseFlag[col] = False
         self.reverseFlag[col] = not self.reverseFlag[col] #改變正反序
         icon = "▲" if self.reverseFlag[col] else "▼"
         self.tree.heading(col, text = icon+head,
                             command=lambda c=col, h=head: self.treeview_sortCols(c,h))
         re = 1 if self.reverseFlag[col] else -1 #對時間、分/步數有用的正反序
-        re_mode = 1 if self.reverseFlag["mode"] else -1 #對模式有用的正反序
-        re_diff = 1 if self.reverseFlag["diff"] else -1 #對難度有用的正反序
+        re_mode = 1 if self.reverseFlag["mode"] else (-1 if self.reverseFlag["mode"] == False else 0) #對模式有用的正反無序flag
+        re_diff = 1 if self.reverseFlag["diff"] else (-1 if self.reverseFlag["diff"] == False else 0) #對難度有用的正反無序flag
 
         mode_priority = {"限時60秒": 0, "完成30關": 1, "挑戰": 2, "無盡": 3}
         diff_priority = {"簡單": 0, "中等": 1, "困難": 2, "6x6":3, "7x7":4, "8x8":5, "9x9":6}
@@ -143,7 +145,7 @@ class MainMenu:
             self.tree.heading(self.cols[i], text = self.head[i],
                               command=lambda c=self.cols[i], h=self.head[i]: self.treeview_sortCols(c,h))
             self.tree.column(self.cols[i], anchor=tk.CENTER, width=120)
-            self.reverseFlag[self.cols[i]] = False
+            self.reverseFlag[self.cols[i]] = None
         self.tree.tag_configure("evenColor", background="lightblue")
         self.tree.tag_configure("oddColor", background="white")
         bg = 1
