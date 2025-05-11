@@ -113,7 +113,7 @@ class PuzzleApp:
         # UI
         self.counter_frame =Frame(self.puzzle_frame)
         self.counter_frame.pack()
-        self.back_btn=Button(self.counter_frame,text="back previous page",command=self.back_menu)
+        self.back_btn=Button(self.counter_frame,text="back main page",command=self.back_menu)
         self.back_btn.pack(side=LEFT,padx=10)
         self.load_img=Button(self.counter_frame,text="load user picture",command=self.load_puzzle)
         self.load_img.pack(side=LEFT)
