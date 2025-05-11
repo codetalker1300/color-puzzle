@@ -310,7 +310,7 @@ class PuzzleApp:
                             break
                         if len(self.selected) < 2:#若被選取的方塊小於兩個
                             x, y = cube.now_coordinate#讀目前的位置，畫黑框
-                            rect = self.canvas.create_rectangle(x, y, x + self.square_size, y + self.square_size, outline="black", width=2)
+                            rect = self.canvas.create_rectangle(x, y, x + self.square_size, y + self.square_size, outline="black", width=3)
                             self.outlines[cube] = rect #創建字典 cube->長方形
                             self.selected.append(cube) #加入選取陣列
 
