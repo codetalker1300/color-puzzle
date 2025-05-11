@@ -44,7 +44,7 @@ class PuzzleApp:
         h = 600 # 視窗高
         x=(screenWidth-w) / 2 # 視窗左上角x軸位置
         y=(screenHeight-h) / 2 # 視窗左上角Y軸
-        root.geometry("%dx%d+%d+%d"%(w,h,x,y))
+        root.geometry("%dx%d+%d+%d"%(w,h,x-320,y-35))
 
         #畫面建構需要的變數
         #難度選擇
@@ -395,7 +395,14 @@ class PuzzleApp:
         plt.figure(figsize=(5.12, 5.12), dpi=100)
         plt.imshow(np.array(self.pil_image))
         plt.axis('off')
-        plt.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)  
+        plt.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02) 
+        manager = plt.get_current_fig_manager()
+        try:
+            # 如果是 TkAgg 後端 (常見)
+            manager.window.wm_geometry("+620+60")  # 設定視窗左上角位置為 (100, 100)
+        except AttributeError:
+            print("error")
+            pass  # 其他後端不支援就略過 
         plt.show()
         
     def start(self):
