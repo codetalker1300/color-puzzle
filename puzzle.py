@@ -142,7 +142,7 @@ class PuzzleApp:
     def handle_difficulty(self):
         if self.difficulty=="簡單":
             if self.mode=="挑戰":
-                self.play_step=1
+                self.play_step=50
                 self.max_strp_level=5
             self.grid_size= 6
         elif self.difficulty=="中等":
