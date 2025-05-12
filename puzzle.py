@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import PhotoImage, messagebox
+from tkinter import messagebox
 from tkinter import *
 import random
 from PIL import Image, ImageTk,ImageOps
@@ -7,7 +7,6 @@ from tkinter import filedialog
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-import time
 
 """
 資料結構，每個方塊一個物件，屬性為
@@ -143,7 +142,7 @@ class PuzzleApp:
     def handle_difficulty(self):
         if self.difficulty=="簡單":
             if self.mode=="挑戰":
-                self.play_step=50
+                self.play_step=1
                 self.max_strp_level=5
             self.grid_size= 6
         elif self.difficulty=="中等":
@@ -416,21 +415,24 @@ class Stroop:
         self.stroop_window.title("增加步數--Stroop Game")
         self.add_step = 0
         self.strp_level = 0
-        self.colors = [("紅色", "red"),("橘色", "orange"),("黃色", "gold"),
-                       ("綠色","green"),("藍色", "blue"),("紫色", "purple")]
+        self.strp_after = None
+        self.colors = [("紅色", "red"),("橘色", "orange"),("黃色", "gold"),("粉色","pink"),("黑色","black"),
+                       ("綠色","green"),("藍色", "blue"),("紫色", "purple"),("灰色","gray"),("褐色","brown")]
 
         tk.Label(self.stroop_window, text=f"選擇顯示的顏色，共{self.max_level}關，答對一題加2步", font=("Arial", 12)).grid(row=0, column=0, columnspan=2, padx=5, pady=5)
         self.strp_level_label = tk.Label(self.stroop_window, text="", font=("Arial", 16))
-        self.strp_level_label.grid(row=1, column=0, padx=5, pady=5)
+        self.strp_level_label.grid(row=2, column=0, padx=5, pady=5)
         self.add_label = tk.Label(self.stroop_window, text="", font=("Arial", 16))
-        self.add_label.grid(row=1, column=1, padx=5, pady=5)
-        
+        self.add_label.grid(row=1, column=0, columnspan=2, padx=5, pady=5)
+        self.strp_timer = tk.Label(self.stroop_window, text="", font=("Arial", 16))
+        self.strp_timer.grid(row=2, column=1, padx=5, pady=5)
+
         self.strp_canvas_size = 300
         self.strp_canvas = tk.Canvas(self.stroop_window, width=self.strp_canvas_size, height=self.strp_canvas_size/2, bg="white")
-        self.strp_canvas.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+        self.strp_canvas.grid(row=3, column=0, columnspan=2, padx=5, pady=5)
 
         btn_frm = tk.Frame(self.stroop_window)
-        btn_frm.grid(row=3, column=0, columnspan=2)
+        btn_frm.grid(row=4, column=0, columnspan=2)
         btn1 = tk.Button(btn_frm, font=("Arial", 30), command=lambda: self.check_strp(0))
         btn1.grid(row=0, column=0, padx=5, pady=5)
         btn2 = tk.Button(btn_frm,font=("Arial", 30), command=lambda: self.check_strp(1))
@@ -448,17 +450,29 @@ class Stroop:
         if self.opt_word[btn_idx][0] == self.topic[1][0]: #選項的字等於題目的顏色
             self.add_step += 2
         self.next_strp_level()
+
+    def update_timer(self):
+        self.strp_timer.config(text=f"剩餘時間：{self.time} 秒")
+        if self.time > 0:
+            self.time -= 1
+            self.strp_after = self.stroop_window.after(1000, self.update_timer)
+        else:
+            self.next_strp_level()
     
     def next_strp_level(self):
         self.strp_canvas.delete("all")
+        if self.strp_after:
+            self.stroop_window.after_cancel(self.strp_after)
         self.strp_level += 1
         self.add_label.config(text=f"目前增加步數：{self.add_step}")
-        if self.strp_level >= self.max_level+1: #玩5關了
-            for btn in self.btns: #讓按鍵不能能按
+        if self.strp_level >= self.max_level+1: #玩到上限了
+            for btn in self.btns: #讓按鍵不能按
                 btn.config(state="disabled")
             self.strp_canvas.create_text(self.strp_canvas_size/2, self.strp_canvas_size/4,
                             text=f"增加{self.add_step}步，\n關閉此視窗\n即可繼續遊戲", font=("Arial", 24), fill="red")
             return
+        self.time = 5 #限制時間
+        self.update_timer()
         self.strp_level_label.config(text=f"第{self.strp_level}關")
         self.topic = random.sample(self.colors,2) #題目的字跟顏色
         self.strp_canvas.create_text(self.strp_canvas_size/2, self.strp_canvas_size/4,
